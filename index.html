@@ -3,30 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>루틴 마스터 V24 - Personal AI</title>
+<title>루틴 마스터 V25 - Smart JSON</title>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
-    /* [이전 스타일 유지 및 최적화] */
+    /* [스타일 최적화] */
     body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f7; padding: 15px; color: #2c3e50; margin: 0; }
     .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
     .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; position: relative; }
     
-    /* AI 버블 강조 */
-    .ai-bubble { background: #37474f; color: white; padding: 18px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; font-size: 0.95em; line-height: 1.4; position: relative; cursor: pointer; }
+    /* AI 버블 디자인 */
+    .ai-bubble { background: #37474f; color: white; padding: 18px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; font-size: 0.95em; line-height: 1.5; position: relative; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+    .ai-bubble:hover { border-color: #03a9f4; }
     .ai-bubble::after { content: ''; position: absolute; bottom: -10px; left: 30px; border-width: 10px 10px 0; border-style: solid; border-color: #37474f transparent; }
 
-    /* 위시리스트 & 일정 슬롯 스타일 */
-    .wish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .wish-box { border: 2px solid #e1f5fe; border-radius: 15px; overflow: hidden; cursor: pointer; position: relative; background: white; transition: 0.2s; }
-    .img-container { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; }
-    .wish-box img { width: 100%; height: 100%; object-fit: cover; }
+    /* 일정 & 위시리스트 슬롯 */
     .slot { display: flex; margin-bottom: 8px; padding: 10px 14px; border-radius: 12px; font-size: 0.85em; align-items: center; border-left: 6px solid #ccc; }
     .time { width: 90px; font-weight: bold; color: rgba(0,0,0,0.6); flex-shrink: 0; }
+    .wish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .wish-box { border: 2px solid #e1f5fe; border-radius: 15px; overflow: hidden; cursor: pointer; position: relative; background: white; }
+    .img-container { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center; }
+    .wish-box img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* 공통 버튼 */
+    /* 하단 버튼 바 */
+    .action-bar { display: flex; gap: 8px; margin-top: 15px; }
+    .btn-action { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #ccc; background: white; font-size: 0.75em; font-weight: bold; cursor: pointer; text-align: center; }
     .btn-main { background: #37474f; color: white; border: none; width: 100%; padding: 13px; border-radius: 15px; font-weight: bold; cursor: pointer; }
     .btn-plus { background: #03a9f4; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 20px; cursor: pointer; }
-    
+
     /* 모달 */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
     .modal-content { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 320px; }
@@ -37,7 +40,7 @@
 
     <div class="container">
         <div class="card" style="border-top-color: #00897b;">
-            <div id="aiBubble" class="ai-bubble" onclick="askUserName()">반가워요! 이름을 알려주시면 제가 응원해 드릴게요. (클릭)</div>
+            <div id="aiBubble" class="ai-bubble" onclick="openModal('nameModal')">이름을 입력해주세요!</div>
             <div style="text-align: center;"><span id="balanceDisplay" style="font-size: 2.5em; font-weight: 900; color: #00695c;">0 원</span></div>
             <button class="btn-main" onclick="openModal('moneyModal')" style="margin-top:15px;">💰 금액 기록</button>
         </div>
@@ -52,20 +55,24 @@
 
         <div class="card" style="border-top-color: #ff7043;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <span style="font-weight:bold;">📅 나의 일정</span>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn-plus" style="background:#546e7a" onclick="openModal('dayModal')">+</button>
-                    <button class="btn-plus" style="background:#ff7043" onclick="downloadJSON()">💾</button>
-                </div>
+                <span style="font-weight:bold;">📅 주간 일정</span>
+                <button class="btn-plus" style="background:#546e7a" onclick="openModal('dayModal')">+</button>
             </div>
             <div id="scheduleContainer"></div>
+            
+            <div class="action-bar">
+                <label class="btn-action">📂 JSON 업로드
+                    <input type="file" id="jsonInput" accept=".json" style="display:none;" onchange="importJSON(this)">
+                </label>
+                <div class="btn-action" onclick="exportJSON()">💾 JSON 다운로드</div>
+            </div>
         </div>
     </div>
 
     <div id="nameModal" class="modal"><div class="modal-content">
-        <h3>👋 이름이 뭐예요?</h3>
-        <input type="text" id="userNameInput" placeholder="이름을 입력하세요">
-        <button class="btn-main" onclick="setUserName()">확인</button>
+        <h3>👋 이름 설정</h3>
+        <input type="text" id="nameInput" placeholder="이름을 알려주세요">
+        <button class="btn-main" onclick="saveName()">저장</button>
     </div></div>
 
     <div id="moneyModal" class="modal"><div class="modal-content">
@@ -76,11 +83,17 @@
     </div></div>
 
     <div id="wishModal" class="modal"><div class="modal-content">
-        <h3>🛍️ 아이템 추가</h3>
-        <input type="text" id="wName" placeholder="아이템 이름">
+        <h3>🛍️ 위시 추가</h3>
+        <input type="text" id="wName" placeholder="아이템명">
         <input type="number" id="wPrice" placeholder="가격">
         <input type="file" id="wFile" accept="image/*" onchange="handleImg(this)">
         <button class="btn-main" onclick="addWish()">추가</button>
+    </div></div>
+
+    <div id="dayModal" class="modal"><div class="modal-content">
+        <h3>요일 추가</h3>
+        <input type="text" id="newDayName" placeholder="요일 이름">
+        <button class="btn-main" onclick="addDay()">추가</button>
     </div></div>
 
     <script>
@@ -88,7 +101,7 @@
         let tempImg = "";
 
         function initApp() {
-            const saved = localStorage.getItem('routine_master_v24');
+            const saved = localStorage.getItem('routine_master_v25');
             if (saved) appData = JSON.parse(saved);
             if (!appData.userName) openModal('nameModal');
             renderAll();
@@ -102,36 +115,53 @@
             saveData();
         }
 
-        // [핵심: AI 버블 업데이트]
+        // [AI 버블 업데이트]
         function updateAI() {
             const bubble = document.getElementById('aiBubble');
-            const name = appData.userName || "준호";
+            const name = appData.userName || "사용자";
             const wishes = appData.customWishes.filter(w => !w.bought);
             
-            let message = "";
             if (wishes.length > 0) {
-                // 아직 사지 않은 위시 중 하나를 랜덤으로 선택
                 const randomWish = wishes[Math.floor(Math.random() * wishes.length)];
                 const remain = randomWish.price - appData.balance;
-                
-                if (remain <= 0) {
-                    message = `✨ 대단해요, ${name}님! 드디어 <b>'${randomWish.name}'</b>을(를) 살 수 있어요! 지금 바로 확인해보세요!`;
-                } else {
-                    message = `🍎 ${name}님, <b>'${randomWish.name}'</b>까지 <b>${remain.toLocaleString()}원</b> 남았어요! 오늘도 과자 참기 도전?`;
-                }
+                bubble.innerHTML = remain <= 0 
+                    ? `🎉 대박! ${name}님, <b>'${randomWish.name}'</b> 살 수 있어요!` 
+                    : `🍎 ${name}님, <b>'${randomWish.name}'</b>까지 <b>${remain.toLocaleString()}원</b> 남았네요!`;
             } else {
-                message = `👋 반가워요, ${name}님! 새로운 목표(위시리스트)를 추가하고 함께 달려봐요!`;
+                bubble.innerHTML = `👋 반가워요 ${name}님! 위시리스트를 채워볼까요?`;
             }
-            bubble.innerHTML = message;
         }
 
-        function askUserName() { openModal('nameModal'); }
-        function setUserName() {
-            const name = document.getElementById('userNameInput').value;
+        // [JSON 업로드/다운로드 핵심]
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(appData.schedules, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `${appData.userName || 'my'}_routine.json`; a.click();
+        }
+
+        function importJSON(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        if (Array.isArray(json)) {
+                            appData.schedules = json;
+                            renderAll();
+                            confetti({ particleCount: 100 });
+                            alert("일정 데이터 로드 완료!");
+                        }
+                    } catch { alert("JSON 형식이 올바르지 않습니다."); }
+                };
+                reader.readAsText(input.files[0]);
+            }
+        }
+
+        // [기본 기능들]
+        function saveName() {
+            const name = document.getElementById('nameInput').value;
             if(name) { appData.userName = name; renderAll(); closeModals(); }
         }
-
-        // 가계부 & 위시리스트
         function saveMoney() {
             const amt = parseInt(document.getElementById('mAmount').value);
             if(amt) { appData.balance += amt; renderAll(); closeModals(); }
@@ -150,40 +180,34 @@
         }
         function renderWishlist() {
             document.getElementById('wishGrid').innerHTML = appData.customWishes.map((it, i) => `
-                <div class="wish-box ${it.bought?'bought':''}" onclick="buyItem(${i})" style="${it.bought?'opacity:0.5':''}">
+                <div class="wish-box" onclick="toggleBuy(${i})" style="${it.bought?'opacity:0.4':''}">
                     <div class="img-container">${it.img ? `<img src="${it.img}">` : 'No Image'}</div>
                     <div style="padding:10px; text-align:center; font-size:0.75em;"><b>${it.name}</b><br>${it.price.toLocaleString()}원</div>
                 </div>
             `).join('');
         }
-        function buyItem(i) {
+        function toggleBuy(i) {
             const it = appData.customWishes[i];
-            if(!it.bought && appData.balance >= it.price) {
-                appData.balance -= it.price; it.bought = true; confetti({particleCount:150}); renderAll();
-            } else if(it.bought) {
-                if(confirm("구매를 취소하고 돈을 돌려받을까요?")) { appData.balance += it.price; it.bought = false; renderAll(); }
-            } else { alert("잔액이 부족해요!"); }
+            if(!it.bought && appData.balance >= it.price) { appData.balance -= it.price; it.bought = true; confetti({particleCount:150}); }
+            else if(it.bought) { appData.balance += it.price; it.bought = false; }
+            renderAll();
         }
-
-        // 일정 렌더링 (V23 방식)
+        function addDay() {
+            const d = document.getElementById('newDayName').value;
+            if(d) { appData.schedules.push({day:d, slots:[]}); renderAll(); closeModals(); }
+        }
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
-            container.innerHTML = appData.schedules.map((d, di) => `
+            container.innerHTML = appData.schedules.map(d => `
                 <div style="margin-bottom:15px;">
-                    <div style="font-weight:bold; color:#546e7a; margin-bottom:5px; font-size:0.9em;">${d.day}</div>
-                    ${d.slots.map(sl => `<div class="slot" style="background:${sl.bg}; border-left-color:${sl.border};"><span class="time">${sl.t}</span><span class="task-name">${sl.emoji||''} ${sl.task}</span></div>`).join('')}
+                    <div style="font-weight:bold; color:#546e7a; margin-bottom:5px;">${d.day}</div>
+                    ${d.slots.map(sl => `<div class="slot" style="background:${sl.bg}; border-left-color:${sl.border};"><span class="time">${sl.t}</span><span>${sl.emoji||''} ${sl.task}</span></div>`).join('')}
                 </div>
-            `).join('') || '<div style="text-align:center; color:#ccc; font-size:0.8em; padding:20px;">일정을 추가해주세요.</div>';
-        }
-
-        function downloadJSON() {
-            const blob = new Blob([JSON.stringify(appData.schedules, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'my_routine.json'; a.click();
+            `).join('');
         }
         function openModal(id) { document.getElementById(id).style.display='flex'; }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
-        function saveData() { localStorage.setItem('routine_master_v24', JSON.stringify(appData)); }
+        function saveData() { localStorage.setItem('routine_master_v25', JSON.stringify(appData)); }
     </script>
 </body>
 </html>
