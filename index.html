@@ -4,209 +4,230 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>6학년 루틴 마스터 - 최종 통합판</title>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
-    /* [기본 스타일] */
+    /* [기존 대시보드 스타일] */
     body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f7; padding: 15px; color: #2c3e50; line-height: 1.4; margin: 0; }
     h1 { text-align: center; color: #37474f; margin: 20px 0; font-size: 1.8em; }
-    
     .top-section { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; max-width: 1400px; margin: 0 auto 25px auto; }
     .schedule-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
 
-    /* 모바일 대응 */
-    @media (max-width: 768px) {
-        .top-section { grid-template-columns: 1fr; }
-        .schedule-layout { grid-template-columns: 1fr; }
-        .wish-gallery-mini { grid-template-columns: repeat(2, 1fr) !important; }
-    }
+    /* [감정 버블 & 카드] */
+    .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; position: relative; }
+    .ai-bubble { background: #37474f; color: white; padding: 18px; border-radius: 20px; margin-bottom: 20px; font-size: 1em; position: relative; min-height: 60px; transition: all 0.4s; font-weight: bold; }
+    .ai-bubble::after { content: ''; position: absolute; bottom: -10px; left: 30px; border-width: 10px 10px 0; border-style: solid; border-color: #37474f transparent; }
+    
+    /* 감정 상태 클래스 */
+    .emo-good { background: #00897b !important; } .emo-good::after { border-color: #00897b transparent; }
+    .emo-warn { background: #fbc02d !important; color: #000 !important; } .emo-warn::after { border-color: #fbc02d transparent; }
+    .emo-angry { background: #d32f2f !important; animation: shake 0.3s infinite; } .emo-angry::after { border-color: #d32f2f transparent; }
+    .emo-depressed { background: #455a64 !important; opacity: 0.8; } .emo-depressed::after { border-color: #455a64 transparent; }
+    .emo-broken { background: #212121 !important; color: #ff5252 !important; border: 2px solid #ff1744; } .emo-broken::after { border-color: #212121 transparent; }
 
-    .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; display: flex; flex-direction: column; }
-    .card-title { font-size: 1.3em; font-weight: 900; margin-bottom: 15px; border-bottom: 2px solid #eceff1; padding-bottom: 10px; display: flex; justify-content: space-between; }
+    /* [DOS 화면] */
+    #dosScreen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; color: #00ff00; font-family: 'Courier New', monospace; padding: 40px; box-sizing: border-box; z-index: 9999; }
+    .cursor { display: inline-block; width: 10px; height: 20px; background: #00ff00; animation: blink 0.8s infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(2px, 2px); } 75% { transform: translate(-2px, -2px); } }
 
-    /* 자산 현황 */
-    .asset-card { border-top-color: #00897b; }
-    .money-display { background: #e0f2f1; border-radius: 20px; border: 2px dashed #00897b; padding: 25px 10px; text-align: center; margin-bottom: 15px; }
-    .balance-text { font-size: 2.3em; font-weight: 900; color: #00695c; }
-    .history-log { flex-grow: 1; min-height: 150px; max-height: 200px; overflow-y: auto; background: #fafafa; border-radius: 15px; padding: 10px; border: 1px solid #eee; margin-bottom: 10px; }
-    .log-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 0.85em; }
-    .log-actions button { border: none; background: none; cursor: pointer; font-size: 0.9em; margin-left: 5px; }
-
-    /* 목표 통합 */
-    .goal-card { border-top-color: #03a9f4; }
-    .wish-gallery-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-    .wish-item-mini { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid #e1f5fe; background: #fff; height: 90px; display: flex; align-items: center; justify-content: center; }
-    .wish-item-mini img { width: 80%; height: 80%; object-fit: contain; }
-    .wish-item-mini span { position: absolute; bottom: 0; width: 100%; background: rgba(3, 169, 244, 0.7); color: white; font-size: 0.6em; text-align: center; padding: 2px 0; }
-
-    /* 진행바 */
-    .progress-container { background: #e0e0e0; border-radius: 15px; height: 26px; overflow: hidden; position: relative; border: 2px solid #b3e5fc; }
-    .progress-bar { background: linear-gradient(90deg, #03a9f4, #00bcd4); height: 100%; width: 0%; transition: 1s ease; }
-    .progress-text { position: absolute; width: 100%; text-align: center; font-size: 0.9em; font-weight: 900; line-height: 26px; }
-
-    /* 일정 슬롯 (파일 데이터 기반 컬러링) */
+    /* [위시리스트 & 일정] */
+    .wish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .wish-box { border: 2px solid #e1f5fe; border-radius: 15px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .wish-box.bought { background: #e8f5e9; border-color: #4caf50; opacity: 0.6; }
+    .p-bar-mini { height: 6px; background: #eee; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .p-fill-mini { height: 100%; background: #03a9f4; width: 0%; transition: 0.5s; }
+    
     .slot { display: flex; margin-bottom: 5px; padding: 7px 10px; background: #f8f9fa; border-radius: 8px; font-size: 0.82em; align-items: center; border-left: 4px solid #cfd8dc; }
-    .time { width: 95px; font-weight: bold; color: #546e7a; flex-shrink: 0; }
-    .morning-slot { background: #fff3e0 !important; border-left-color: #ff9800; color: #e65100; font-weight: bold; }
-    .school-slot { background: #e3f2fd !important; border-left-color: #1e88e5; }
-    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; color: #f57f17; }
-    .game-slot { background: #dcedc8 !important; border-left-color: #7cb342; color: #33691e; }
-    .routine-slot { background: #f5f5f5 !important; color: #616161; }
-    .urgent-slot { background: #ffcdd2 !important; border-left-color: #e53935; color: #b71c1c; }
-
-    /* 모달 */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 320px; }
-    .styled-input { width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid #eceff1; border-radius: 12px; font-size: 1em; box-sizing: border-box; }
-    .btn-main { background: #37474f; color: white; border: none; border-radius: 12px; padding: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+    .time { width: 90px; font-weight: bold; color: #546e7a; }
+    .morning-slot { background: #fff3e0 !important; border-left-color: #ff9800; }
+    .game-slot { background: #dcedc8 !important; border-left-color: #7cb342; }
+    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; }
+    .urgent-slot { background: #ffcdd2 !important; border-left-color: #e53935; }
+    .btn-main { background: #37474f; color: white; border: none; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 </style>
 </head>
-<body onload="loadAppData()">
+<body onload="initApp()">
 
-    <h1>📊 6학년 루틴 마스터</h1>
-
-    <div class="top-section">
-        <div class="card asset-card">
-            <div class="card-title">💵 자산 현황</div>
-            <div class="money-display">
-                <div class="balance-text" id="balanceDisplay">0 원</div>
-                <div style="font-size:0.8em; color:#00897b; margin-top:5px;">과자 안 사먹고 모은 돈 🍎</div>
-            </div>
-            <div class="history-log" id="historyLog"></div>
-            <button class="btn-main" onclick="openModal()">💰 기록 및 편집</button>
-        </div>
-
-        <div class="card goal-card">
-            <div class="card-title">🎯 iPad mini 7 Blue <span>4/24</span></div>
-            <div class="wish-gallery-mini">
-                <div class="wish-item-mini"><img src="https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/ipad-mini-storage-select-gallery-202410-blue?wid=5120&hei=2880"><span>iPad mini 7</span></div>
-                <div class="wish-item-mini"><img src="https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/MX2D3_AV1?wid=1144&hei=1144"><span>Pencil Pro</span></div>
-                <div class="wish-item-mini"><img src="https://ecimg.cafe24img.com/pg964b86331718002/longtogether/web/product/small/20250501/448a21f71c3d4e818f17fdd1b817cb9d.jpg"><span>Case</span></div>
-                <div class="wish-item-mini"><img src="https://thumbnail.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/215369728548508-329dfeaa-6735-4fd4-84be-ac8d279b0003.jpg"><span>Film</span></div>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" id="goalProgressBar"></div>
-                <div class="progress-text" id="progressText">0%</div>
-            </div>
-            <p style="text-align:center; font-size:0.8em; font-weight:bold; color:#03a9f4; margin-top:10px;">목표: 1,000,000원</p>
-        </div>
+    <div id="dosScreen">
+        <div>[SYSTEM FATAL ERROR]</div>
+        <div>REASON: TOTAL_ASSET_LOSS</div><br>
+        > <span id="dosMessage"></span><span class="cursor"></span>
     </div>
 
-    <div class="schedule-layout" id="scheduleGrid"></div>
+    <div id="mainApp">
+        <h1>📊 6학년 루틴 마스터</h1>
+        <div class="top-section">
+            <div class="card" style="border-top-color: #00897b;">
+                <div id="aiBubble" class="ai-bubble">오늘은 과자 참을 수 있죠? 🍎</div>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span id="balanceDisplay" style="font-size: 2.2em; font-weight: 900; color: #00695c;">0 원</span>
+                </div>
+                <div id="historyLog" style="height: 100px; overflow-y: auto; background: #fafafa; border-radius: 10px; padding: 8px; font-size: 0.8em; border: 1px solid #eee;"></div>
+                <button class="btn-main" onclick="openModal()">💰 기록하기</button>
+            </div>
 
-    <div id="moneyModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle" style="margin-top:0; text-align:center;">💰 기록 관리</h3>
-            <input type="hidden" id="editIndex">
-            <input type="text" id="moneyNote" class="styled-input" placeholder="내용">
-            <input type="number" id="moneyAmount" class="styled-input" placeholder="금액 (+/-)">
-            <button class="btn-main" onclick="saveRecord()">저장</button>
-            <button class="btn-main" style="background:#cfd8dc; color:#546e7a;" onclick="closeModal()">취소</button>
+            <div class="card" style="border-top-color: #03a9f4;">
+                <div class="card-title" style="font-size:1.1em;">🎯 위시리스트 추적</div>
+                <div class="wish-grid" id="wishGrid"></div>
+            </div>
+        </div>
+
+        <div class="schedule-layout" id="scheduleGrid"></div>
+    </div>
+
+    <div id="moneyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:25px; border-radius:20px; width:300px;">
+            <h3 style="text-align:center; margin-top:0;">💸 금액 기록</h3>
+            <select id="recordType" style="width:100%; padding:10px; margin-bottom:10px;">
+                <option value="저축">➕ 저축</option>
+                <option value="지출">➖ 지출</option>
+            </select>
+            <input type="text" id="moneyNote" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;" placeholder="내용">
+            <input type="number" id="moneyAmount" style="width:100%; padding:10px; margin-bottom:15px; box-sizing:border-box;" placeholder="금액">
+            <button class="btn-main" onclick="saveRecord()">기록 완료</button>
+            <button onclick="closeModal()" style="width:100%; margin-top:10px; background:none; border:none; color:gray;">닫기</button>
         </div>
     </div>
 
     <script>
-        let appData = { balance: 0, logs: [] };
-        const GOAL_TOTAL = 1000000;
+        const ITEMS = [
+            { name: "iPad mini 7", price: 800000, img: "📱" },
+            { name: "Pencil Pro", price: 150000, img: "🖋️" },
+            { name: "Oddbalm Case", price: 35000, img: "💼" },
+            { name: "Metal Nibs", price: 15000, img: "📍" }
+        ];
 
-        function loadAppData() {
-            const saved = localStorage.getItem('routine_v30_final');
+        const SCRIPTS = {
+            SAVE: ["🎖️ 전재산 증식! 대단해요!", "✨ 목표에 한 걸음 크게 다가갔어요!", "👏 저축하는 습관, 6학년 최고예요!"],
+            SPEND_LOW: ["🍭 괜찮아~ 실수 할 수 있지!", "🍭 이제부터 다시 잘 해보자!", "💫 다음엔 한 번 더 고민해봐요!"],
+            SPEND_MID: ["💢 뭐야! 왜그래!!", "😟 장난.... 이지...?", "🧨 이딴게 내 사용자...?"],
+            SPEND_HIGH: ["💀 이번생엔 글렀네......", "🚬 잘 좀 해봐라..... 힘들다...", "🌑 .....뭐...지?"],
+            SPEND_CRITICAL: ["💔 무시당했어요..", "🗑️ 버려졌어요.....", "🚫 사용자님이 약속을 지키지 않으시네요..."],
+            DOS: ["전재산을... 한 번에...? 이건 살인이에요.", "사용자님, 저와의 약속은 아무것도 아니었나요?", "0원을 위해 제가 존재할 이유는 없습니다.", "FATAL ERROR: USER_BETRAYAL_DETECTED"]
+        };
+
+        let appData = { balance: 0, logs: [], bought: [] };
+
+        function initApp() {
+            const saved = localStorage.getItem('junho_v4.5_final');
             if (saved) appData = JSON.parse(saved);
+            renderWishlist();
             renderSchedule();
             updateUI();
         }
 
         function updateUI() {
             document.getElementById('balanceDisplay').innerText = appData.balance.toLocaleString() + " 원";
-            let p = Math.min(100, Math.floor((appData.balance / GOAL_TOTAL) * 100));
-            document.getElementById('goalProgressBar').style.width = p + "%";
-            document.getElementById('progressText').innerText = p + "%";
-
-            const logHTML = appData.logs.map((l, i) => `
-                <div class="log-item">
-                    <span>${l.note}</span>
-                    <span style="color:${l.amount<0?'#d32f2f':'#2e7d32'}; font-weight:bold;">${l.amount>0?'+':''}${l.amount.toLocaleString()}</span>
-                    <div class="log-actions">
-                        <button onclick="editRecord(${i})">✏️</button>
-                        <button onclick="deleteRecord(${i})">❌</button>
-                    </div>
+            ITEMS.forEach((item, i) => {
+                const fill = document.getElementById(`fill-${i}`);
+                if (fill) fill.style.width = Math.min(100, (appData.balance / item.price) * 100) + "%";
+            });
+            document.getElementById('historyLog').innerHTML = appData.logs.slice(0, 10).map(l => `
+                <div class="log-item" style="display:flex; justify-content:space-between; font-size:0.9em; padding:3px 0; border-bottom:1px solid #eee;">
+                    <span>${l.note}</span><span style="color:${l.type==='저축'?'#2e7d32':'#d32f2f'}">${l.type==='저축'?'+':'-'}${l.amount.toLocaleString()}</span>
                 </div>
             `).join('');
-            document.getElementById('historyLog').innerHTML = logHTML || '<p style="text-align:center; font-size:0.8em; color:#999;">기록이 없습니다.</p>';
-            localStorage.setItem('routine_v30_final', JSON.stringify(appData));
+            processEmotion();
+            localStorage.setItem('junho_v4.5_final', JSON.stringify(appData));
         }
 
-        function openModal() {
-            document.getElementById('modalTitle').innerText = "💰 새 기록 추가";
-            document.getElementById('editIndex').value = "-1";
-            document.getElementById('moneyNote').value = "";
-            document.getElementById('moneyAmount').value = "";
-            document.getElementById('moneyModal').style.display = 'flex';
+        function processEmotion() {
+            const bubble = document.getElementById('aiBubble');
+            const last = appData.logs[0];
+            bubble.className = "ai-bubble";
+            if (!last) return;
+
+            if (last.type === '저축') {
+                bubble.classList.add('emo-good');
+                bubble.innerText = SCRIPTS.SAVE[Math.floor(Math.random()*SCRIPTS.SAVE.length)];
+            } else {
+                const amt = last.amount;
+                if (last.note.includes('구매:')) return bubble.innerText = "🎊 목표 달성! 축하해요!";
+                if (amt >= 80000) { bubble.classList.add('emo-broken'); bubble.innerText = SCRIPTS.SPEND_CRITICAL[Math.floor(Math.random()*SCRIPTS.SPEND_CRITICAL.length)]; }
+                else if (amt >= 50000) { bubble.classList.add('emo-depressed'); bubble.innerText = SCRIPTS.SPEND_HIGH[Math.floor(Math.random()*SCRIPTS.SPEND_HIGH.length)]; }
+                else if (amt >= 10000) { bubble.classList.add('emo-angry'); bubble.innerText = SCRIPTS.SPEND_MID[Math.floor(Math.random()*SCRIPTS.SPEND_MID.length)]; }
+                else { bubble.classList.add('emo-warn'); bubble.innerText = SCRIPTS.SPEND_LOW[Math.floor(Math.random()*SCRIPTS.SPEND_LOW.length)]; }
+            }
         }
 
-        function editRecord(i) {
-            const log = appData.logs[i];
-            document.getElementById('modalTitle').innerText = "✏️ 기록 수정";
-            document.getElementById('editIndex').value = i;
-            document.getElementById('moneyNote').value = log.note;
-            document.getElementById('moneyAmount').value = log.amount;
-            document.getElementById('moneyModal').style.display = 'flex';
+        function triggerDos() {
+            document.getElementById('dosScreen').style.display = 'block';
+            let msg = SCRIPTS.DOS[Math.floor(Math.random()*SCRIPTS.DOS.length)];
+            let i = 0;
+            function typing() {
+                if (i < msg.length) {
+                    document.getElementById('dosMessage').innerHTML += msg.charAt(i);
+                    i++; setTimeout(typing, 100);
+                }
+            }
+            typing();
         }
-
-        function closeModal() { document.getElementById('moneyModal').style.display = 'none'; }
 
         function saveRecord() {
-            const i = parseInt(document.getElementById('editIndex').value);
+            const type = document.getElementById('recordType').value;
             const note = document.getElementById('moneyNote').value || "일반";
             const amt = parseInt(document.getElementById('moneyAmount').value);
-            if(isNaN(amt)) return;
+            if (isNaN(amt)) return;
 
-            if(i === -1) {
-                appData.logs.unshift({ note, amount: amt });
-                appData.balance += amt;
-            } else {
-                appData.balance = appData.balance - appData.logs[i].amount + amt;
-                appData.logs[i] = { note, amount: amt };
+            // 전재산 탕진 체크 (목표 구매 제외)
+            if (type === '지출' && !note.includes("구매:") && amt >= appData.balance && appData.balance > 0) {
+                appData.balance = 0;
+                appData.logs.unshift({ type: '지출', note: "전재산 탕진", amount: amt });
+                updateUI(); triggerDos(); return;
             }
+
+            appData.balance += (type === '저축' ? amt : -amt);
+            appData.logs.unshift({ type, note, amount: amt });
             updateUI(); closeModal();
         }
 
-        function deleteRecord(i) {
-            if(confirm("이 기록을 취소하시겠습니까?")) {
-                appData.balance -= appData.logs[i].amount;
-                appData.logs.splice(i, 1);
-                updateUI();
-            }
-        }
-
-        function renderSchedule() {
-            const game = "🎮 Ryujinx Time";
-            const shower = "🚿 샤워 (기기종료)";
-            const morning = [
-                { t: '07:25-07:40', task: '⏰ 기상 및 침구정리', type: 'morning-slot' },
-                { t: '07:40-08:00', task: '🍱 아침 식사', type: 'morning-slot' },
-                { t: '08:00-08:15', task: '🎒 등교 준비/출발', type: 'morning-slot' }
-            ];
-            const evening = [
-                { t: '19:00-19:40', task: '🍱 저녁 식사', type: 'routine-slot' },
-                { t: '21:30-21:50', task: '🪥 취침 준비', type: 'routine-slot' },
-                { t: '21:50-07:25', task: '💤 취침', type: 'routine-slot' }
-            ];
-
-            const weekly = [
-                { title: '월 · 목요일', s: [...morning, { t: '08:15-14:20', task: '🏫 학교 생활', type: 'school-slot' }, { t: '14:35-15:05', task: '✏️ 숙제[1] 수학', type: 'homework-slot' }, { t: '15:05-15:35', task: game, type: 'game-slot' }, { t: '15:35-16:05', task: '✏️ 숙제[2] 중수', type: 'homework-slot' }, { t: '16:05-16:35', task: game, type: 'game-slot' }, { t: '16:35-17:05', task: '✏️ 숙제[3] 영어', type: 'homework-slot' }, { t: '17:35-18:05', task: '✏️ 숙제[4] 코딩', type: 'homework-slot' }, { t: '18:30-19:00', task: shower, type: 'routine-slot' }, ...evening]},
-                { title: '화요일', s: [...morning, { t: '08:15-14:20', task: '🏫 학교 생활', type: 'school-slot' }, { t: '14:30-15:00', task: '✏️ 숙제[1] 수학', type: 'homework-slot' }, { t: '15:00-15:30', task: game, type: 'game-slot' }, { t: '16:00-18:00', task: '💻 코딩 학원', type: 'homework-slot' }, { t: '18:00-18:30', task: '✏️ 숙제 마무리', type: 'homework-slot' }, { t: '18:30-19:00', task: shower, type: 'routine-slot' }, ...evening]},
-                { title: '수요일', s: [...morning, { t: '08:15-12:50', task: '🏫 학교 생활', type: 'school-slot' }, { t: '13:00-14:00', task: '🔤 영어 과외', type: 'homework-slot' }, { t: '14:30-15:00', task: '✏️ 숙제[1] 수학', type: 'homework-slot' }, { t: '15:30-16:00', task: '✏️ 숙제[2] 중수', type: 'homework-slot' }, { t: '16:30-17:30', task: '✏️ 숙제[3,4]', type: 'homework-slot' }, { t: '18:30-19:00', task: shower, type: 'routine-slot' }, ...evening]},
-                { title: '금요일', s: [...morning, { t: '08:15-14:20', task: '🏫 학교 생활', type: 'school-slot' }, { t: '14:30-15:30', task: '✚ 수학 과외', type: 'homework-slot' }, { t: '16:00-17:00', task: '✏️ 숙제[1,2]', type: 'homework-slot' }, { t: '17:00-17:30', task: game, type: 'game-slot' }, { t: '17:30-18:00', task: '✏️ 숙제[3,4]', type: 'homework-slot' }, { t: '18:30-19:00', task: shower, type: 'routine-slot' }, ...evening]},
-                { title: '토요일', s: [{ t: '09:00-11:00', task: '💻 코딩 학원', type: 'homework-slot' }, { t: '11:15-12:15', task: game, type: 'game-slot' }, { t: '13:00-18:30', task: '✨ 자유 시간 ✨', type: '' }, { t: '18:30-19:00', task: shower, type: 'routine-slot' }, ...evening]},
-                { title: '일요일', s: [{ t: '09:00-12:00', task: '⚠️ 미완료 숙제 정산', type: 'urgent-slot' }, { t: '12:00-13:00', task: '🍱 점심 식사', type: '' }, { t: '13:00-18:30', task: '🎮 Ryujinx (자유!)', type: 'game-slot' }, { t: '18:30-19:00', task: shower, type: 'routine-slot' }, { t: '19:00-20:00', task: '🍱 일요 만찬', type: 'routine-slot' }, { t: '21:30-21:50', task: '🪥 취침 준비', type: 'routine-slot' }, { t: '21:50-07:25', task: '💤 취침', type: 'routine-slot' }]}
-            ];
-
-            document.getElementById('scheduleGrid').innerHTML = weekly.map(day => `
-                <div class="card">
-                    <div class="card-title">${day.title}</div>
-                    ${day.s.map(slot => `<div class="slot ${slot.type}"><span class="time">${slot.t}</span><span>${slot.task}</span></div>`).join('')}
+        function renderWishlist() {
+            document.getElementById('wishGrid').innerHTML = ITEMS.map((item, i) => `
+                <div class="wish-box ${appData.bought.includes(item.name)?'bought':''}" onclick="toggleBuy(${i})">
+                    <div style="font-size:1.5em;">${item.img}</div>
+                    <div style="font-size:0.75em; font-weight:bold;">${item.name}</div>
+                    <div class="p-bar-mini"><div id="fill-${i}" class="p-fill-mini"></div></div>
                 </div>
             `).join('');
         }
+
+        function toggleBuy(i) {
+            const item = ITEMS[i];
+            if (appData.bought.includes(item.name)) {
+                if(confirm("구매 취소?")) {
+                    appData.balance += item.price;
+                    appData.bought = appData.bought.filter(n => n !== item.name);
+                    appData.logs.unshift({ type: '저축', note: `환불: ${item.name}`, amount: item.price });
+                }
+            } else {
+                if (appData.balance < item.price) return alert("부족해요!");
+                appData.balance -= item.price;
+                appData.bought.push(item.name);
+                appData.logs.unshift({ type: '지출', note: `구매: ${item.name}`, amount: item.price });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            }
+            renderWishlist(); updateUI();
+        }
+
+        function renderSchedule() {
+            const morning = [{t:'07:25-07:40', task:'⏰ 기상/정리', s:'morning-slot'}, {t:'07:40-08:00', task:'🍱 아침 식사', s:'morning-slot'}, {t:'08:00-08:15', task:'🎒 등교 준비', s:'morning-slot'}];
+            const night = [{t:'19:00-19:40', task:'🍱 저녁 식사'}, {t:'21:30-21:50', task:'🪥 취침 준비'}, {t:'21:50-07:25', task:'💤 취침'}];
+            const weekly = [
+                { title: "월·목 루틴", s: [...morning, {t:'08:15-14:20', task:'🏫 학교', s:'school-slot'}, {t:'14:35-15:05', task:'✏️ 수학숙제', s:'homework-slot'}, {t:'15:05-15:35', task:'🎮 게임', s:'game-slot'}, {t:'15:35-16:05', task:'✏️ 중수숙제', s:'homework-slot'}, {t:'18:30-19:00', task:'🚿 샤워'}, ...night]},
+                { title: "화요일", s: [...morning, {t:'14:30-15:00', task:'✏️ 수학숙제', s:'homework-slot'}, {t:'16:00-18:00', task:'💻 코딩학원', s:'homework-slot'}, ...night]},
+                { title: "수요일", s: [...morning, {t:'08:15-12:50', task:'🏫 학교', s:'school-slot'}, {t:'13:00-14:00', task:'🔤 영어과외', s:'homework-slot'}, ...night]},
+                { title: "금요일", s: [...morning, {t:'14:30-15:30', task:'✚ 수학과외', s:'homework-slot'}, {t:'16:00-17:00', task:'✏️ 숙제[1,2]', s:'homework-slot'}, ...night]},
+                { title: "토요일", s: [{t:'09:00-11:00', task:'💻 코딩학원', s:'homework-slot'}, {t:'13:00-18:30', task:'✨ 자유시간'}, ...night]},
+                { title: "일요일", s: [{t:'09:00-12:00', task:'⚠️ 숙제 정산', s:'urgent-slot'}, {t:'13:00-18:30', task:'🎮 자유 게임', s:'game-slot'}, {t:'19:00-20:00', task:'🍱 일요만찬'}, ...night.slice(1)]}
+            ];
+            document.getElementById('scheduleGrid').innerHTML = weekly.map(day => `
+                <div class="card"><div class="card-title">${day.title}</div>
+                ${day.s.map(slot => `<div class="slot ${slot.s || ''}"><span class="time">${slot.t}</span><span>${slot.task}</span></div>`).join('')}</div>
+            `).join('');
+        }
+
+        function openModal() { document.getElementById('moneyModal').style.display='flex'; }
+        function closeModal() { document.getElementById('moneyModal').style.display='none'; }
     </script>
 </body>
 </html>
