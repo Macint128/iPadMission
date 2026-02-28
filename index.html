@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6학년 루틴 마스터 - 풀 스케줄 & 쇼핑 통합판</title>
+<title>6학년 루틴 마스터 - 최종 가격판</title>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
-    /* [기본 디자인 & 세로 배치] */
+    /* [레이아웃: 전체 세로 배치] */
     body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f7; padding: 15px; color: #2c3e50; margin: 0; }
     h1 { text-align: center; color: #37474f; margin: 20px 0; font-size: 1.8em; }
     .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
     .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; }
 
-    /* [AI & 자산 현황] */
+    /* [AI & 자산] */
     .ai-bubble { background: #37474f; color: white; padding: 18px; border-radius: 20px; margin-bottom: 20px; font-size: 1em; position: relative; font-weight: bold; }
     .ai-bubble::after { content: ''; position: absolute; bottom: -10px; left: 30px; border-width: 10px 10px 0; border-style: solid; border-color: #37474f transparent; }
     .history-log { max-height: 120px; overflow-y: auto; background: #fafafa; border-radius: 10px; padding: 10px; font-size: 0.8em; border: 1px solid #eee; margin: 10px 0; }
@@ -24,17 +24,16 @@
     .wish-box.bought { background: #e8f5e9; border-color: #4caf50; }
     .wish-box.bought::after { content: '✅'; position: absolute; top: 8px; right: 8px; font-size: 1.1em; }
     .wish-box img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 5px; }
-    .progress-wrap { background: #eee; height: 18px; border-radius: 9px; overflow: hidden; margin-top: 10px; position: relative; }
-    #totalBar { background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; width: 0%; transition: 0.5s; }
+    .progress-wrap { background: #eee; height: 18px; border-radius: 9px; overflow: hidden; margin-top: 10px; }
+    #totalBar { background: linear-gradient(90deg, #03a9f4, #4fc3f7); height: 100%; width: 0%; transition: 0.5s; }
 
-    /* [일정 슬롯 컬러링 - 원본 데이터 유지] */
+    /* [일정 슬롯 컬러] */
     .slot { display: flex; margin-bottom: 6px; padding: 8px 12px; background: #f8f9fa; border-radius: 10px; font-size: 0.85em; align-items: center; border-left: 5px solid #cfd8dc; }
     .time { width: 100px; font-weight: bold; color: #546e7a; flex-shrink: 0; }
-    .morning-slot { background: #fff3e0 !important; border-left-color: #ff9800; color: #e65100; }
+    .morning-slot { background: #fff3e0 !important; border-left-color: #ff9800; }
     .school-slot { background: #e3f2fd !important; border-left-color: #1e88e5; }
-    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; color: #f57f17; }
-    .game-slot { background: #dcedc8 !important; border-left-color: #7cb342; color: #33691e; }
-    .routine-slot { background: #f5f5f5 !important; color: #616161; }
+    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; }
+    .game-slot { background: #dcedc8 !important; border-left-color: #7cb342; }
     .urgent-slot { background: #ffcdd2 !important; border-left-color: #e53935; color: #b71c1c; font-weight: bold; }
 
     .btn-main { background: #37474f; color: white; border: none; width: 100%; padding: 13px; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
@@ -44,21 +43,20 @@
 
     <div class="container">
         <div class="card" style="border-top-color: #00897b;">
-            <div id="aiBubble" class="ai-bubble">과자 안 먹고 모은 돈으로 iPad 가즈아! 🍎</div>
+            <div id="aiBubble" class="ai-bubble">준호님, 과자 참기 챌린지 진행 중! 🍎</div>
             <div style="text-align: center;">
                 <span id="balanceDisplay" style="font-size: 2.5em; font-weight: 900; color: #00695c;">0 원</span>
-                <div style="font-size: 0.8em; color: #666;">현재 사용 가능한 금액</div>
             </div>
             <div class="history-log" id="historyLog"></div>
-            <button class="btn-main" onclick="openModal()">💰 금액 기록/수정</button>
+            <button class="btn-main" onclick="openModal()">💰 내역 관리 (추가/수정)</button>
         </div>
 
         <div class="card" style="border-top-color: #03a9f4;">
-            <div style="font-weight:bold;">🛒 위시리스트 (클릭 구매/취소)</div>
+            <div style="font-weight:bold;">🛒 위시리스트 (클릭 구매)</div>
             <div class="wish-grid" id="wishGrid"></div>
             <div style="margin-top:20px;">
                 <div style="display:flex; justify-content:space-between; font-size:0.85em; font-weight:bold;">
-                    <span>구매 달성도 (목표 100만원)</span>
+                    <span>구매 달성도 (목표금액 기준)</span>
                     <span id="progressText">0%</span>
                 </div>
                 <div class="progress-wrap"><div id="totalBar"></div></div>
@@ -80,17 +78,18 @@
     </div>
 
     <script>
+        // 요청하신 가격으로 업데이트
         const ITEMS = [
-            { name: "iPad mini 7", price: 800000, img: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/ipad-mini-storage-select-gallery-202410-blue?wid=5120" },
-            { name: "Pencil Pro", price: 150000, img: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/MX2D3_AV1" },
-            { name: "Oddbalm Case", price: 35000, img: "https://ecimg.cafe24img.com/pg964b86331718002/longtogether/web/product/small/20250501/448a21f71c3d4e818f17fdd1b817cb9d.jpg" },
-            { name: "Metal Nibs", price: 15000, img: "https://thumbnail.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/215369728548508-329dfeaa-6735-4fd4-84be-ac8d279b0003.jpg" }
+            { name: "iPad mini 7", price: 749000, img: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/ipad-mini-storage-select-gallery-202410-blue?wid=5120" },
+            { name: "Pencil Pro", price: 195000, img: "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/MX2D3_AV1" },
+            { name: "Case", price: 30000, img: "https://ecimg.cafe24img.com/pg964b86331718002/longtogether/web/product/small/20250501/448a21f71c3d4e818f17fdd1b817cb9d.jpg" },
+            { name: "Film", price: 10000, img: "https://thumbnail.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/215369728548508-329dfeaa-6735-4fd4-84be-ac8d279b0003.jpg" }
         ];
 
         let appData = { balance: 0, logs: [], bought: [] };
 
         function initApp() {
-            const saved = localStorage.getItem('junho_v9_final');
+            const saved = localStorage.getItem('junho_v10_final');
             if (saved) appData = JSON.parse(saved);
             renderSchedule();
             renderWishlist();
@@ -100,10 +99,10 @@
         function updateUI() {
             document.getElementById('balanceDisplay').innerText = appData.balance.toLocaleString() + " 원";
             
-            // 프로그레스 바: 실제 구매한 금액 합계 기준
             let boughtTotal = 0;
             ITEMS.forEach(item => { if(appData.bought.includes(item.name)) boughtTotal += item.price; });
-            const p = Math.min(100, Math.floor((boughtTotal / 1000000) * 100));
+            const target = 984000; // 749+195+30+10
+            const p = Math.min(100, Math.floor((boughtTotal / target) * 100));
             document.getElementById('totalBar').style.width = p + "%";
             document.getElementById('progressText').innerText = p + "%";
 
@@ -112,32 +111,30 @@
                     <span>${l.note}</span>
                     <div>
                         <span style="font-weight:bold; color:${l.amount>=0?'#2e7d32':'#d32f2f'}; margin-right:8px;">${l.amount.toLocaleString()}</span>
-                        <button onclick="editLog(${i})" style="border:none; background:none; cursor:pointer; font-size:1em;">✏️</button>
+                        <button onclick="editLog(${i})" style="border:none; background:none; cursor:pointer;">✏️</button>
                     </div>
                 </div>
-            `).join('') || '기록이 없습니다.';
+            `).join('') || '기록 없음';
 
-            localStorage.setItem('junho_v9_final', JSON.stringify(appData));
+            localStorage.setItem('junho_v10_final', JSON.stringify(appData));
         }
 
         function toggleBuy(i) {
             const item = ITEMS[i];
             const isBought = appData.bought.includes(item.name);
-
             if (isBought) {
-                if(confirm(`${item.name} 구매를 취소하고 환불하시겠습니까?`)) {
+                if(confirm("구매 취소할까요?")) {
                     appData.balance += item.price;
                     appData.bought = appData.bought.filter(n => n !== item.name);
                     appData.logs.unshift({ note: `환불: ${item.name}`, amount: item.price });
                 }
             } else {
-                if (appData.balance < item.price) return alert("잔액이 부족합니다!");
-                if(confirm(`${item.name}을 구매하시겠습니까?`)) {
+                if (appData.balance < item.price) return alert("잔액 부족!");
+                if(confirm(`${item.name} 구매?`)) {
                     appData.balance -= item.price;
                     appData.bought.push(item.name);
                     appData.logs.unshift({ note: `구매: ${item.name}`, amount: -item.price });
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                    document.getElementById('aiBubble').innerText = "와! 목표 달성 축하드려요!! 🎉";
+                    confetti({ particleCount: 150, spread: 70 });
                 }
             }
             renderWishlist(); updateUI();
@@ -147,70 +144,44 @@
             document.getElementById('wishGrid').innerHTML = ITEMS.map((item, i) => `
                 <div class="wish-box ${appData.bought.includes(item.name)?'bought':''}" onclick="toggleBuy(${i})">
                     <img src="${item.img}">
-                    <div style="font-size:0.85em; font-weight:bold;">${item.name}</div>
+                    <div style="font-size:0.8em; font-weight:bold;">${item.name}</div>
                     <div style="font-size:0.7em; color:#888;">${item.price.toLocaleString()}원</div>
                 </div>
             `).join('');
         }
 
         function renderSchedule() {
-            const game = "🎮 Ryujinx Time";
-            const shower = "🚿 샤워 (기기종료)";
-            const mor = [
-                {t:'07:25-07:40', task:'⏰ 기상 및 침구정리', s:'morning-slot'},
-                {t:'07:40-08:00', task:'🍱 아침 식사', s:'morning-slot'},
-                {t:'08:00-08:15', task:'🎒 등교 준비/출발', s:'morning-slot'}
-            ];
-            const nig = [
-                {t:'19:00-19:40', task:'🍱 저녁 식사', s:'routine-slot'},
-                {t:'21:30-21:50', task:'🪥 취침 준비', s:'routine-slot'},
-                {t:'21:50-07:25', task:'💤 취침', s:'routine-slot'}
-            ];
-
+            const mor = [{t:'07:25-08:15', task:'⏰ 기상 및 준비', s:'morning-slot'}];
+            const nig = [{t:'19:00-19:40', task:'🍱 저녁 식사'}, {t:'21:30-21:50', task:'🪥 취침 준비'}, {t:'21:50-07:25', task:'💤 취침'}];
             const days = [
-                { title: "월 · 목요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:35-15:05', task:'✏️ 숙제[1] 수학', s:'homework-slot'}, {t:'15:05-15:35', task:game, s:'game-slot'}, {t:'15:35-16:05', task:'✏️ 숙제[2] 중수', s:'homework-slot'}, {t:'16:05-16:35', task:game, s:'game-slot'}, {t:'16:35-17:05', task:'✏️ 숙제[3] 영어', s:'homework-slot'}, {t:'17:35-18:05', task:'✏️ 숙제[4] 코딩', s:'homework-slot'}, {t:'18:30-19:00', task:shower, s:'routine-slot'}, ...nig]},
-                { title: "화요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:30-15:00', task:'✏️ 숙제[1] 수학', s:'homework-slot'}, {t:'15:00-15:30', task:game, s:'game-slot'}, {t:'16:00-18:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'18:00-18:30', task:'✏️ 숙제 마무리', s:'homework-slot'}, {t:'18:30-19:00', task:shower, s:'routine-slot'}, ...nig]},
-                { title: "수요일", s: [...mor, {t:'08:15-12:50', task:'🏫 학교 생활', s:'school-slot'}, {t:'13:00-14:00', task:'🔤 영어 과외', s:'homework-slot'}, {t:'14:30-15:00', task:'✏️ 숙제[1] 수학', s:'homework-slot'}, {t:'15:30-16:00', task:'✏️ 숙제[2] 중수', s:'homework-slot'}, {t:'16:30-17:30', task:'✏️ 숙제[3,4]', s:'homework-slot'}, {t:'18:30-19:00', task:shower, s:'routine-slot'}, ...nig]},
-                { title: "금요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:30-15:30', task:'✚ 수학 과외', s:'homework-slot'}, {t:'16:00-17:00', task:'✏️ 숙제[1,2]', s:'homework-slot'}, {t:'17:00-17:30', task:game, s:'game-slot'}, {t:'17:30-18:00', task:'✏️ 숙제[3,4]', s:'homework-slot'}, {t:'18:30-19:00', task:shower, s:'routine-slot'}, ...nig]},
-                { title: "토요일", s: [{t:'09:00-11:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'11:15-12:15', task:game, s:'game-slot'}, {t:'13:00-18:30', task:'✨ 자유 시간 ✨'}, {t:'18:30-19:00', task:shower, s:'routine-slot'}, ...nig]},
-                { title: "일요일", s: [{t:'09:00-12:00', task:'⚠️ 미완료 숙제 정산', s:'urgent-slot'}, {t:'13:00-18:30', task:game, s:'game-slot'}, {t:'18:30-19:00', task:shower, s:'routine-slot'}, {t:'19:00-20:00', task:'🍱 일요 만찬', s:'routine-slot'}, ...nig.slice(1)]}
+                { title: "월·목 루틴", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:35-18:05', task:'✏️ 숙제 및 Ryujinx', s:'homework-slot'}, {t:'18:30-19:00', task:'🚿 샤워'}, ...nig]},
+                { title: "화요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'16:00-18:00', task:'💻 코딩 학원', s:'homework-slot'}, ...nig]},
+                { title: "수요일", s: [...mor, {t:'08:15-12:50', task:'🏫 학교', s:'school-slot'}, {t:'13:00-14:00', task:'🔤 영어 과외', s:'homework-slot'}, ...nig]},
+                { title: "금요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교', s:'school-slot'}, {t:'14:30-15:30', task:'✚ 수학 과외', s:'homework-slot'}, ...nig]},
+                { title: "토요일", s: [{t:'09:00-11:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'13:00-18:30', task:'✨ 자유 시간 ✨'}, ...nig]},
+                { title: "일요일", s: [{t:'09:00-12:00', task:'⚠️ 숙제 정산', s:'urgent-slot'}, {t:'12:00-13:00', task:'🍕 점심 식사'}, {t:'13:00-18:30', task:'🎮 Ryujinx', s:'game-slot'}, ...nig]}
             ];
-
             document.getElementById('scheduleContainer').innerHTML = days.map(d => `
                 <div class="card">
-                    <div style="font-weight:900; margin-bottom:12px; font-size:1.1em; border-bottom:2px solid #eee; padding-bottom:5px;">${d.title}</div>
+                    <div style="font-weight:900; margin-bottom:10px; border-bottom:1px solid #eee;">${d.title}</div>
                     ${d.s.map(sl => `<div class="slot ${sl.s||''}"><span class="time">${sl.t}</span><span>${sl.task}</span></div>`).join('')}
                 </div>
             `).join('');
         }
 
-        // [기록 관리 기능]
-        function openModal() {
-            document.getElementById('modalTitle').innerText = "💰 새 기록 추가";
-            document.getElementById('editIndex').value = "-1";
-            document.getElementById('moneyNote').value = "";
-            document.getElementById('moneyAmount').value = "";
-            document.getElementById('moneyModal').style.display='flex';
-        }
+        function openModal() { document.getElementById('editIndex').value="-1"; document.getElementById('moneyModal').style.display='flex'; }
         function closeModal() { document.getElementById('moneyModal').style.display='none'; }
         function saveRecord() {
             const idx = parseInt(document.getElementById('editIndex').value);
             const note = document.getElementById('moneyNote').value || "일반";
             const amt = parseInt(document.getElementById('moneyAmount').value);
             if (isNaN(amt)) return;
-
-            if (idx === -1) {
-                appData.balance += amt;
-                appData.logs.unshift({ note, amount: amt });
-            } else {
-                appData.balance = appData.balance - appData.logs[idx].amount + amt;
-                appData.logs[idx] = { note, amount: amt };
-            }
+            if (idx === -1) { appData.balance += amt; appData.logs.unshift({ note, amount: amt }); }
+            else { appData.balance = appData.balance - appData.logs[idx].amount + amt; appData.logs[idx] = { note, amount: amt }; }
             updateUI(); closeModal();
         }
         function editLog(i) {
             const log = appData.logs[i];
-            document.getElementById('modalTitle').innerText = "✏️ 기록 수정";
             document.getElementById('editIndex').value = i;
             document.getElementById('moneyNote').value = log.note;
             document.getElementById('moneyAmount').value = log.amount;
