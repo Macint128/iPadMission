@@ -3,43 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6학년 루틴 마스터 - 가계부 통합판</title>
+<title>준호의 6학년 루틴 마스터 V14</title>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
     /* [기본 디자인] */
     body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f7; padding: 15px; color: #2c3e50; margin: 0; line-height: 1.5; }
-    h1 { text-align: center; color: #37474f; margin: 20px 0; font-size: 1.8em; }
     .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
     .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; }
 
-    /* [자산 & 가계부 리스트] */
+    /* [자산 & 가계부] */
     .ai-bubble { background: #37474f; color: white; padding: 18px; border-radius: 20px; margin-bottom: 20px; font-size: 1em; position: relative; font-weight: bold; }
     .ai-bubble::after { content: ''; position: absolute; bottom: -10px; left: 30px; border-width: 10px 10px 0; border-style: solid; border-color: #37474f transparent; }
     .history-log { max-height: 150px; overflow-y: auto; background: #fafafa; border-radius: 15px; padding: 10px; border: 1px solid #eee; margin: 15px 0; }
     .log-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.85em; }
-    .log-info { display: flex; flex-direction: column; }
-    .log-date { font-size: 0.7em; color: #999; }
     .log-btns button { border: none; background: none; cursor: pointer; font-size: 1.1em; padding: 0 5px; }
 
     /* [쇼핑 & 체크리스트] */
     .wish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
     .wish-box { border: 2px solid #e1f5fe; border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; transition: 0.3s; background: white; position: relative; }
     .wish-box.bought { background: #e8f5e9; border-color: #4caf50; }
-    .wish-box.bought::after { content: '✅'; position: absolute; top: 5px; right: 5px; font-size: 1em; }
+    .wish-box.bought::after { content: '✅'; position: absolute; top: 5px; right: 5px; }
     .wish-box img { width: 40px; height: 40px; object-fit: contain; margin-bottom: 5px; }
     
     .todo-item { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: #f9f9f9; border-radius: 12px; cursor: pointer; border: 1px solid #eee; }
     .todo-item.done { background: #e8f5e9; border-color: #a5d6a7; text-decoration: line-through; color: #888; }
-    .todo-checkbox { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 6px; margin-right: 12px; background: white; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .todo-checkbox { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 6px; margin-right: 12px; background: white; display: flex; align-items: center; justify-content: center; }
     .todo-item.done .todo-checkbox { background: #4caf50; border-color: #4caf50; }
     .todo-item.done .todo-checkbox::after { content: '✓'; color: white; font-weight: bold; }
 
-    /* [일정 슬롯] */
+    /* [일정 슬롯 컬러링] */
     .slot { display: flex; margin-bottom: 6px; padding: 8px 12px; background: #f8f9fa; border-radius: 10px; font-size: 0.85em; align-items: center; border-left: 5px solid #cfd8dc; }
-    .time { width: 90px; font-weight: bold; color: #546e7a; flex-shrink: 0; }
+    .time { width: 95px; font-weight: bold; color: #546e7a; flex-shrink: 0; }
     .morning-slot { background: #fff3e0 !important; border-left-color: #ff9800; }
-    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; }
-    .game-slot { background: #dcedc8 !important; border-left-color: #7cb342; }
+    .school-slot { background: #e3f2fd !important; border-left-color: #1e88e5; }
+    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; color: #f57f17; }
+    .game-slot { background: #dcedc8 !important; border-left-color: #7cb342; color: #33691e; }
+    .urgent-slot { background: #ffcdd2 !important; border-left-color: #e53935; color: #b71c1c; font-weight: bold; }
 
     .btn-main { background: #37474f; color: white; border: none; width: 100%; padding: 13px; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
@@ -49,15 +48,12 @@
 
     <div class="container">
         <div class="card" style="border-top-color: #00897b;">
-            <div id="aiBubble" class="ai-bubble">용돈 아껴서 iPad mini 7 가즈아! 🍎</div>
+            <div id="aiBubble" class="ai-bubble">준호님, 과자 안 사먹고 모은 돈은 최고의 투자예요! 🍎</div>
             <div style="text-align: center;">
                 <span id="balanceDisplay" style="font-size: 2.5em; font-weight: 900; color: #00695c;">0 원</span>
             </div>
-            
-            <div class="history-log" id="historyLog">
-                </div>
-
-            <button class="btn-main" onclick="openModal()">💰 새 내역 기록하기</button>
+            <div class="history-log" id="historyLog"></div>
+            <button class="btn-main" onclick="openModal()">💰 새 내역 기록/수정</button>
         </div>
 
         <div class="card" style="border-top-color: #03a9f4;">
@@ -66,7 +62,7 @@
             <div style="margin-top:20px;">
                 <div style="display:flex; justify-content:space-between; font-size:0.85em; font-weight:bold;">
                     <span>구매 달성도 (목표 984,000원)</span>
-                    <span id="progressText">0%</span>
+                    <span id="progressText">0% 달성</span>
                 </div>
                 <div style="background:#eee; height:15px; border-radius:10px; overflow:hidden; margin-top:5px;">
                     <div id="totalBar" style="background:#03a9f4; height:100%; width:0%; transition:0.5s;"></div>
@@ -94,7 +90,7 @@
         <div style="background:white; padding:25px; border-radius:25px; width:300px;">
             <h3 id="modalTitle" style="text-align:center; margin-top:0;">내역 기록</h3>
             <input type="hidden" id="editIndex" value="-1">
-            <input type="text" id="moneyNote" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #ccc; box-sizing:border-box;" placeholder="내용 (예: 용돈, 과자참음)">
+            <input type="text" id="moneyNote" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #ccc; box-sizing:border-box;" placeholder="내용 (예: 과자참음)">
             <input type="number" id="moneyAmount" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #ccc; box-sizing:border-box;" placeholder="금액 (지출은 -)">
             <button class="btn-main" onclick="saveRecord()">저장하기</button>
             <button onclick="closeModal()" style="width:100%; margin-top:10px; background:none; border:none; color:gray; cursor:pointer;">취소</button>
@@ -112,7 +108,7 @@
         let appData = { balance: 0, logs: [], bought: [], todos: [false, false, false, false] };
 
         function initApp() {
-            const saved = localStorage.getItem('junho_final_v13');
+            const saved = localStorage.getItem('junho_v14_final');
             if (saved) appData = JSON.parse(saved);
             renderSchedule();
             renderWishlist();
@@ -120,11 +116,9 @@
             updateUI();
         }
 
-        // [가계부 로직]
+        // [핵심 기능: UI 업데이트 & 가계부]
         function updateUI() {
             document.getElementById('balanceDisplay').innerText = appData.balance.toLocaleString() + " 원";
-            
-            // 프로그레스 바 (구매한 물건값 기준)
             let boughtTotal = 0;
             ITEMS.forEach(item => { if(appData.bought.includes(item.name)) boughtTotal += item.price; });
             const target = 984000;
@@ -132,23 +126,21 @@
             document.getElementById('totalBar').style.width = p + "%";
             document.getElementById('progressText').innerText = p + "% 달성";
 
-            // 가계부 로그 렌더링
             document.getElementById('historyLog').innerHTML = appData.logs.map((l, i) => `
                 <div class="log-item">
-                    <div class="log-info">
-                        <span class="log-date">${l.date}</span>
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-size:0.7em; color:#999;">${l.date}</span>
                         <span style="font-weight:bold;">${l.note}</span>
                     </div>
                     <div style="display:flex; align-items:center;">
-                        <span style="font-weight:bold; color:${l.amount>=0?'#2e7d32':'#d32f2f'}; margin-right:10px;">${l.amount.toLocaleString()}원</span>
+                        <span style="font-weight:bold; color:${l.amount>=0?'#2e7d32':'#d32f2f'}; margin-right:8px;">${l.amount.toLocaleString()}원</span>
                         <div class="log-btns">
                             <button onclick="editLog(${i})">✏️</button>
                             <button onclick="deleteLog(${i})">❌</button>
                         </div>
                     </div>
                 </div>
-            `).join('') || '<p style="text-align:center; color:#999; font-size:0.8em; margin-top:20px;">내역이 없습니다.</p>';
-
+            `).join('') || '<p style="text-align:center; color:#999; font-size:0.8em;">내역이 없습니다.</p>';
             saveData();
         }
 
@@ -157,18 +149,9 @@
             const note = document.getElementById('moneyNote').value || "일반";
             const amt = parseInt(document.getElementById('moneyAmount').value);
             const date = new Date().toLocaleDateString();
-
             if (isNaN(amt)) return;
-
-            if (idx === -1) {
-                // 새 기록
-                appData.balance += amt;
-                appData.logs.unshift({ note, amount: amt, date });
-            } else {
-                // 수정
-                appData.balance = appData.balance - appData.logs[idx].amount + amt;
-                appData.logs[idx] = { ...appData.logs[idx], note, amount: amt };
-            }
+            if (idx === -1) { appData.balance += amt; appData.logs.unshift({ note, amount: amt, date }); }
+            else { appData.balance = appData.balance - appData.logs[idx].amount + amt; appData.logs[idx] = { ...appData.logs[idx], note, amount: amt }; }
             updateUI(); closeModal();
         }
 
@@ -182,18 +165,21 @@
         }
 
         function deleteLog(i) {
-            if(confirm("이 내역을 삭제할까요? (잔액도 함께 복구됩니다)")) {
+            if(confirm("이 내역을 삭제할까요?")) {
                 appData.balance -= appData.logs[i].amount;
                 appData.logs.splice(i, 1);
                 updateUI();
             }
         }
 
-        // [숙제 & 쇼핑 & 일정 로직 (이전과 동일)]
+        // [기능: 숙제 & 쇼핑]
         function toggleTodo(i) {
             appData.todos[i] = !appData.todos[i];
             renderTodos();
-            if (appData.todos.every(t => t)) confetti({ particleCount: 100, spread: 50 });
+            if (appData.todos.every(t => t)) {
+                confetti({ particleCount: 150, spread: 60, origin: { y: 0.8 } });
+                document.getElementById('aiBubble').innerText = "매일 숙제 완료! 고생했어요 준호님! 🎉";
+            }
             saveData();
         }
         function renderTodos() {
@@ -204,23 +190,26 @@
             }
         }
         function resetTodos() { appData.todos = [false, false, false, false]; renderTodos(); saveData(); }
+
         function toggleBuy(i) {
             const item = ITEMS[i];
+            const date = new Date().toLocaleDateString();
             if (appData.bought.includes(item.name)) {
-                if(confirm("구매 취소?")) {
+                if(confirm("구매 취소할까요?")) {
                     appData.balance += item.price;
                     appData.bought = appData.bought.filter(n => n !== item.name);
-                    appData.logs.unshift({ note: `환불: ${item.name}`, amount: item.price, date: new Date().toLocaleDateString() });
+                    appData.logs.unshift({ note: `환불: ${item.name}`, amount: item.price, date });
                 }
             } else {
-                if (appData.balance < item.price) return alert("잔액 부족!");
+                if (appData.balance < item.price) return alert("잔액이 부족합니다!");
                 appData.balance -= item.price;
                 appData.bought.push(item.name);
-                appData.logs.unshift({ note: `구매: ${item.name}`, amount: -item.price, date: new Date().toLocaleDateString() });
-                confetti({ particleCount: 200 });
+                appData.logs.unshift({ note: `구매: ${item.name}`, amount: -item.price, date });
+                confetti({ particleCount: 200, spread: 80 });
             }
             renderWishlist(); updateUI();
         }
+
         function renderWishlist() {
             document.getElementById('wishGrid').innerHTML = ITEMS.map((item, i) => `
                 <div class="wish-box ${appData.bought.includes(item.name)?'bought':''}" onclick="toggleBuy(${i})">
@@ -230,31 +219,34 @@
                 </div>
             `).join('');
         }
+
+        // [기능: 요일별 풀 스케줄]
         function renderSchedule() {
-            const mor = [{t:'07:25-08:15', task:'⏰ 기상 및 준비', s:'morning-slot'}];
-            const nig = [{t:'19:00-19:40', task:'🍱 저녁 식사'}, {t:'21:50-07:25', task:'💤 취침'}];
+            const mor = [{t:'07:25-07:40', task:'⏰ 기상', s:'morning-slot'}, {t:'07:40-08:15', task:'🍱 아침/준비', s:'morning-slot'}];
+            const nig = [{t:'19:00-19:40', task:'🍱 저녁 식사'}, {t:'21:30-21:50', task:'🪥 취침 준비'}, {t:'21:50-07:25', task:'💤 취침'}];
+            const game = "🎮 Ryujinx Time";
+            const shower = "🚿 샤워 (기기종료)";
+
             const days = [
-                { title: "월·목 루틴", s: [...mor, {t:'08:15-14:20', task:'🏫 학교'}, {t:'14:35-18:05', task:'✏️ 숙제 및 게임', s:'homework-slot'}, ...nig]},
-                { title: "화요일", s: [...mor, {t:'16:00-18:00', task:'💻 코딩 학원', s:'homework-slot'}, ...nig]},
-                { title: "토요일", s: [{t:'09:00-11:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'13:00-18:30', task:'✨ 자유 시간 ✨'}, ...nig]},
-                { title: "일요일", s: [{t:'09:00-12:00', task:'⚠️ 숙제 정산', s:'urgent-slot'}, {t:'13:00-18:30', task:'🎮 Ryujinx', s:'game-slot'}, ...nig]}
+                { title: "월 · 목요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:35-15:05', task:'✏️ 수학 숙제', s:'homework-slot'}, {t:'15:05-15:35', task:game, s:'game-slot'}, {t:'15:35-16:05', task:'✏️ 중수 숙제', s:'homework-slot'}, {t:'16:05-16:35', task:game, s:'game-slot'}, {t:'16:35-18:05', task:'✏️ 영어/코딩 숙제'}, {t:'18:30-19:00', task:shower}, ...nig]},
+                { title: "화요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'16:00-18:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'18:30-19:00', task:shower}, ...nig]},
+                { title: "수요일", s: [...mor, {t:'08:15-12:50', task:'🏫 학교 생활', s:'school-slot'}, {t:'13:00-14:00', task:'🔤 영어 과외', s:'homework-slot'}, {t:'14:30-18:00', task:'✏️ 개인 숙제 루틴', s:'homework-slot'}, {t:'18:30-19:00', task:shower}, ...nig]},
+                { title: "금요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:30-15:30', task:'✚ 수학 과외', s:'homework-slot'}, {t:'16:00-18:00', task:'✏️ 금요 숙제 정산', s:'homework-slot'}, {t:'18:30-19:00', task:shower}, ...nig]},
+                { title: "토요일", s: [{t:'09:00-11:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'13:00-18:30', task:'✨ 토요 자유 시간 ✨'}, {t:'18:30-19:00', task:shower}, ...nig]},
+                { title: "일요일", s: [{t:'09:00-12:00', task:'⚠️ 긴급 숙제 정산', s:'urgent-slot'}, {t:'13:00-18:30', task:'🎮 일요 자유 게임', s:'game-slot'}, {t:'19:00-20:00', task:'🍱 일요 만찬'}, {t:'21:30-07:25', task:'💤 숙면 루틴'}]}
             ];
+
             document.getElementById('scheduleContainer').innerHTML = days.map(d => `
                 <div class="card">
-                    <div style="font-weight:bold; margin-bottom:10px; border-bottom:1px solid #eee;">${d.title}</div>
+                    <div style="font-weight:900; margin-bottom:12px; border-bottom:2px solid #eee; padding-bottom:5px;">${d.title}</div>
                     ${d.s.map(sl => `<div class="slot ${sl.s||''}"><span class="time">${sl.t}</span><span>${sl.task}</span></div>`).join('')}
                 </div>
             `).join('');
         }
-        function openModal() {
-            document.getElementById('modalTitle').innerText = "💰 새 내역 기록";
-            document.getElementById('editIndex').value = "-1";
-            document.getElementById('moneyNote').value = "";
-            document.getElementById('moneyAmount').value = "";
-            document.getElementById('moneyModal').style.display = 'flex'; 
-        }
+
+        function openModal() { document.getElementById('editIndex').value = "-1"; document.getElementById('moneyModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('moneyModal').style.display = 'none'; }
-        function saveData() { localStorage.setItem('junho_final_v13', JSON.stringify(appData)); }
+        function saveData() { localStorage.setItem('junho_v14_final', JSON.stringify(appData)); }
     </script>
 </body>
 </html>
