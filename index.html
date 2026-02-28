@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>루틴 마스터 V28 - 가계부 마스터</title>
+<title>루틴 마스터 V28.1 - 핏 조절 완료</title>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
-    /* [기본 스타일] */
+    /* [기본 스타일 및 레이아웃] */
     body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f7; padding: 15px; color: #2c3e50; margin: 0; }
     .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
     .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; position: relative; }
@@ -23,33 +23,47 @@
     .log-note { font-weight: bold; color: #444; }
     .log-amount { font-weight: 900; }
     .log-actions button { border: none; background: none; cursor: pointer; font-size: 12px; margin-left: 5px; padding: 5px; opacity: 0.5; }
-    .log-actions button:hover { opacity: 1; }
 
     /* 일정 슬롯 (JSON 컬러 연동) */
     .slot { display: flex; margin-bottom: 8px; padding: 10px 14px; border-radius: 12px; font-size: 0.85em; align-items: center; border-left: 6px solid #ccc; position: relative; }
     .time { width: 95px; font-weight: bold; color: rgba(0,0,0,0.6); flex-shrink: 0; }
     .task-text { flex-grow: 1; font-weight: 500; }
 
-    /* 버튼 및 모달 */
+    /* [핵심 수정: 입력창 핏 조절] */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 320px; box-sizing: border-box; } /* 너비 90%로 안전하게 조절 */
+    
+    input, select { 
+        width: 100%; 
+        padding: 12px; 
+        margin-bottom: 12px; 
+        border-radius: 10px; 
+        border: 1px solid #ccc; 
+        box-sizing: border-box; /* 패딩이 너비에 포함되게 하여 터짐 방지 */
+        font-family: inherit;
+        font-size: 0.9em;
+    }
+    
+    /* 날짜 입력창이 폰마다 길어지는 것을 방지 */
+    #mDate {
+        appearance: none;
+        -webkit-appearance: none;
+        min-height: 45px;
+    }
+
     .btn-main { background: #37474f; color: white; border: none; width: 100%; padding: 13px; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
     .btn-plus { background: #03a9f4; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
     .action-group { display: flex; gap: 10px; margin-top: 10px; }
     .btn-sub { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #ccc; background: white; font-size: 0.8em; cursor: pointer; text-align: center; font-weight: bold; color: #546e7a; }
-
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: white; padding: 25px; border-radius: 25px; width: 320px; box-sizing: border-box; }
-    input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 10px; border: 1px solid #ccc; box-sizing: border-box; }
 </style>
 </head>
 <body onload="initApp()">
 
     <div class="container">
         <div class="card" style="border-top-color: #00897b;">
-            <div id="aiBubble" class="ai-bubble" onclick="openModal('nameModal')">과자 안 사고 참은 준호님, 정말 대단해요! 🍎</div>
+            <div id="aiBubble" class="ai-bubble" onclick="openModal('nameModal')">준호님, 오늘도 합리적인 소비와 저축을 응원해요! 🍏</div>
             <div style="text-align: center;"><span id="balanceDisplay" style="font-size: 2.5em; font-weight: 900; color: #00695c;">0 원</span></div>
-            
             <div class="history-log" id="historyLog"></div>
-            
             <button class="btn-main" onclick="openMoneyModal()">💰 금액 기록/수정</button>
         </div>
 
@@ -63,11 +77,12 @@
 
     <div id="moneyModal" class="modal"><div class="modal-content">
         <h3 id="moneyModalTitle">내역 기록</h3>
+        <label style="font-size: 0.8em; color: #666; margin-bottom: 4px; display: block;">날짜 선택</label>
         <input type="date" id="mDate">
-        <input type="text" id="mNote" placeholder="어떤 저축/지출인가요?">
-        <input type="number" id="mAmount" placeholder="금액 (수입은 +, 지출은 -)">
+        <input type="text" id="mNote" placeholder="내용 (예: 과자참음, 용돈)">
+        <input type="number" id="mAmount" placeholder="금액 (수입+, 지출-)">
         <button class="btn-main" onclick="saveMoney()">저장하기</button>
-        <button onclick="closeModals()" style="width:100%; border:none; background:none; margin-top:10px; color:gray;">취소</button>
+        <button onclick="closeModals()" style="width:100%; border:none; background:none; margin-top:10px; color:gray; font-size:0.9em;">취소</button>
     </div></div>
 
     <div id="slotModal" class="modal"><div class="modal-content">
@@ -75,8 +90,8 @@
         <input type="text" id="sTime" placeholder="시간 (예: 14:35-18:05)">
         <input type="text" id="sTask" placeholder="할 일">
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
-            <label style="font-size:0.8em;">배경</label><input type="color" id="sBg" value="#f8f9fa" style="width:50px; height:30px; padding:0;">
-            <label style="font-size:0.8em;">테두리</label><input type="color" id="sBorder" value="#cfd8dc" style="width:50px; height:30px; padding:0;">
+            <label style="font-size:0.8em;">배경</label><input type="color" id="sBg" value="#f8f9fa" style="width:60px; height:35px; padding:2px;">
+            <label style="font-size:0.8em;">테두리</label><input type="color" id="sBorder" value="#cfd8dc" style="width:60px; height:35px; padding:2px;">
         </div>
         <button class="btn-main" onclick="saveSlot()">일정 저장</button>
         <button onclick="closeModals()" style="width:100%; border:none; background:none; margin-top:10px; color:gray;">취소</button>
@@ -90,12 +105,7 @@
 
     <script>
         const DAYS = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"];
-        let appData = { 
-            userName: "", 
-            balance: 0, 
-            logs: [], // {date, note, amount}
-            schedules: DAYS.map(d => ({ day: d, slots: [] })) 
-        };
+        let appData = { userName: "", balance: 0, logs: [], schedules: DAYS.map(d => ({ day: d, slots: [] })) };
         let editLogIdx = null;
         let curDayIdx = null;
 
@@ -104,8 +114,12 @@
             if (saved) appData = JSON.parse(saved);
             if (!appData.userName) openModal('nameModal');
             
-            // 오늘 날짜 세팅 기본값
-            document.getElementById('mDate').value = new Date().toISOString().substring(0, 10);
+            // 오늘 날짜 세팅 (KST 기준 안전하게)
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 10);
+            document.getElementById('mDate').value = localISOTime;
+            
             renderAll();
         }
 
@@ -113,31 +127,29 @@
             document.getElementById('balanceDisplay').innerText = appData.balance.toLocaleString() + " 원";
             renderLogs();
             renderSchedule();
+            updateAI();
             saveData();
         }
 
-        // [가계부 로직: 보기/편집/삭제]
+        function updateAI() {
+            const bubble = document.getElementById('aiBubble');
+            const name = appData.userName || "준호";
+            bubble.innerHTML = `${name}님, 가계부와 일정을 <br>성실하게 관리 중이시네요! 멋져요! 🏁`;
+        }
+
+        // 가계부 기능
         function renderLogs() {
             const logBox = document.getElementById('historyLog');
             if (appData.logs.length === 0) {
                 logBox.innerHTML = '<p style="text-align:center; color:#ccc; font-size:0.8em; padding:20px;">내역이 없습니다.</p>';
                 return;
             }
-            // 최신순 정렬 후 렌더링
             logBox.innerHTML = appData.logs.map((log, i) => `
                 <div class="log-item">
-                    <div class="log-info">
-                        <span class="log-date">${log.date}</span>
-                        <span class="log-note">${log.note}</span>
-                    </div>
+                    <div class="log-info"><span class="log-date">${log.date}</span><span class="log-note">${log.note}</span></div>
                     <div style="display:flex; align-items:center;">
-                        <span class="log-amount" style="color:${log.amount >= 0 ? '#2e7d32' : '#d32f2f'}">
-                            ${(log.amount >= 0 ? '+' : '') + log.amount.toLocaleString()}원
-                        </span>
-                        <div class="log-actions">
-                            <button onclick="editLog(${i})">✏️</button>
-                            <button onclick="deleteLog(${i})">❌</button>
-                        </div>
+                        <span class="log-amount" style="color:${log.amount >= 0 ? '#2e7d32' : '#d32f2f'}">${(log.amount >= 0 ? '+' : '') + log.amount.toLocaleString()}원</span>
+                        <div class="log-actions"><button onclick="editLog(${i})">✏️</button><button onclick="deleteLog(${i})">❌</button></div>
                     </div>
                 </div>
             `).join('');
@@ -155,22 +167,18 @@
             const date = document.getElementById('mDate').value;
             const note = document.getElementById('mNote').value || "미지정";
             const amount = parseInt(document.getElementById('mAmount').value);
-
             if (isNaN(amount)) return alert("금액을 입력해주세요.");
 
             if (editLogIdx !== null) {
-                // 편집 모드: 이전 금액 차감 후 새 금액 반영
                 appData.balance -= appData.logs[editLogIdx].amount;
                 appData.logs[editLogIdx] = { date, note, amount };
                 appData.balance += amount;
             } else {
-                // 새 기록 모드
                 appData.logs.unshift({ date, note, amount });
                 appData.balance += amount;
                 if(amount > 0) confetti({ particleCount: 100 });
             }
-            renderAll();
-            closeModals();
+            renderAll(); closeModals();
         }
 
         function editLog(i) {
@@ -184,14 +192,14 @@
         }
 
         function deleteLog(i) {
-            if (confirm("이 내역을 삭제할까요?")) {
+            if (confirm("삭제할까요?")) {
                 appData.balance -= appData.logs[i].amount;
                 appData.logs.splice(i, 1);
                 renderAll();
             }
         }
 
-        // [일정 관리 - JSON 컬러 연동]
+        // 일정 관리
         function renderSchedule() {
             const root = document.getElementById('scheduleRoot');
             root.innerHTML = appData.schedules.map((d, di) => `
@@ -204,20 +212,14 @@
                         <div class="slot" style="background-color: ${sl.bg || '#f8f9fa'}; border-left-color: ${sl.border || '#cfd8dc'};">
                             <span class="time">${sl.t}</span>
                             <span class="task-text">${sl.task}</span>
-                            <button onclick="deleteSlot(${di}, ${si})" style="border:none; background:none; cursor:pointer; font-size:10px; opacity:0.3;">❌</button>
+                            <button onclick="deleteSlot(${di}, si)" style="border:none; background:none; cursor:pointer; font-size:10px; opacity:0.3;">❌</button>
                         </div>
                     `).join('')}
                 </div>
             `).join('');
         }
 
-        function openSlotEditor(dayIdx) {
-            curDayIdx = dayIdx;
-            document.getElementById('sTime').value = "";
-            document.getElementById('sTask').value = "";
-            openModal('slotModal');
-        }
-
+        function openSlotEditor(dayIdx) { curDayIdx = dayIdx; openModal('slotModal'); }
         function saveSlot() {
             const t = document.getElementById('sTime').value;
             const task = document.getElementById('sTask').value;
@@ -230,25 +232,25 @@
             }
         }
 
-        // [기본 유틸리티]
         function importJSON(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
                         const json = JSON.parse(e.target.result);
-                        if (Array.isArray(json)) { appData.schedules = json; renderAll(); confetti({particleCount:100}); }
+                        if (Array.isArray(json)) { appData.schedules = json; renderAll(); }
                     } catch { alert("JSON 형식이 아닙니다."); }
                 };
                 reader.readAsText(input.files[0]);
             }
         }
+
         function exportJSON() {
             const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `routine_master_backup.json`; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = `routine_backup.json`; a.click();
         }
+
         function saveName() {
             const n = document.getElementById('nameInput').value;
             if(n) { appData.userName = n; renderAll(); closeModals(); }
