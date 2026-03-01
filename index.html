@@ -12,70 +12,62 @@
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <style>
-    /* [기본 스타일] */
     body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f7; padding: 15px; padding-top: env(safe-area-inset-top); color: #2c3e50; margin: 0; -webkit-tap-highlight-color: transparent; }
     .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
     .card { background: white; border-radius: 25px; padding: 22px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-top: 8px solid #546e7a; position: relative; }
 
-    /* [D-DAY 섹션 스타일] */
-    .dday-card { 
-        background: linear-gradient(135deg, #37474f 0%, #263238 100%); 
-        color: white; border-top: none; text-align: center; padding: 15px;
-    }
-    .dday-unit { font-size: 0.9em; opacity: 0.8; }
-    .dday-count { font-size: 2.5em; font-weight: 900; color: #ffeb3b; margin: 5px 0; display: block; }
-    .dday-target { font-size: 0.8em; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 10px; }
-
-    /* [가계부 & 위시리스트] */
+    /* 가계부 & AI 버블 */
+    .ai-bubble { background: #37474f; color: white; padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; font-size: 0.85em; position: relative; line-height: 1.5; }
+    .ai-bubble::after { content: ''; position: absolute; bottom: -10px; left: 30px; border-width: 10px 10px 0; border-style: solid; border-color: #37474f transparent; }
     .balance-val { font-size: 2.2em; font-weight: 900; color: #00695c; text-align: center; margin: 10px 0; }
     .history-log { max-height: 110px; overflow-y: auto; background: #fafafa; border-radius: 15px; padding: 10px; border: 1px solid #eee; margin: 15px 0; }
     .log-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.8em; }
-    
+
+    /* 위시리스트 */
+    .wish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
+    .wish-box { border: 2px solid #e1f5fe; border-radius: 18px; overflow: hidden; cursor: pointer; background: white; position: relative; }
+    .wish-box.bought { border-color: #4caf50; background: #e8f5e9; opacity: 0.8; }
+    .img-container { width: 100%; aspect-ratio: 1 / 1; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 2.2em; }
     .bar-bg { background: #eee; height: 14px; border-radius: 10px; overflow: hidden; margin: 10px 0; }
     .bar-fill { background: linear-gradient(90deg, #03a9f4, #00bcd4); height: 100%; width: 0%; transition: 0.8s; }
-    .wish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .wish-box { border: 2px solid #e1f5fe; border-radius: 18px; overflow: hidden; background: white; cursor: pointer; }
-    .wish-box.bought { border-color: #4caf50; background: #e8f5e9; }
-    .img-container { width: 100%; aspect-ratio: 1 / 1; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 2.2em; }
 
-    /* [체크리스트 & 일정] */
+    /* 체크리스트 */
     .todo-item { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: #f9f9f9; border-radius: 15px; cursor: pointer; border: 1px solid #eee; position: relative; }
     .todo-item.done { background: #e8f5e9; color: #888; text-decoration: line-through; }
-    .todo-check { width: 22px; height: 22px; border: 2px solid #ccc; border-radius: 7px; margin-right: 12px; }
-    .done .todo-check { background: #4caf50; border-color: #4caf50; position: relative; }
-    .done .todo-check::after { content: '✓'; color: white; position: absolute; left: 4px; top: -1px; font-weight: bold; }
-    
+    .todo-check { width: 22px; height: 22px; border: 2px solid #ccc; border-radius: 7px; margin-right: 12px; background: white; display: flex; align-items: center; justify-content: center; }
+    .done .todo-check { background: #4caf50; border-color: #4caf50; }
+    .done .todo-check::after { content: '✓'; color: white; font-weight: bold; }
+    .del-todo { position: absolute; right: 12px; border: none; background: none; color: #ddd; font-size: 20px; }
+
+    /* 일정 */
     .slot { display: flex; margin-bottom: 6px; padding: 8px 12px; background: #f8f9fa; border-radius: 10px; font-size: 0.85em; align-items: center; border-left: 5px solid #cfd8dc; }
     .time { width: 95px; font-weight: bold; color: #546e7a; flex-shrink: 0; }
-    .morning-slot { border-left-color: #ff9800; background: #fff3e0 !important; }
-    .homework-slot { border-left-color: #fbc02d; background: #fff9c4 !important; }
+    .morning-slot { background: #fff3e0 !important; border-left-color: #ff9800; }
+    .school-slot { background: #e3f2fd !important; border-left-color: #1e88e5; }
+    .homework-slot { background: #fff9c4 !important; border-left-color: #fbc02d; }
+    .urgent-slot { background: #ffcdd2 !important; border-left-color: #e53935; color: #b71c1c; font-weight: bold; }
 
-    /* [기타] */
+    /* 버튼 & 모달 */
     .btn-main { background: #37474f; color: white; border: none; width: 100%; padding: 15px; border-radius: 18px; font-weight: bold; cursor: pointer; }
     .btn-plus { background: #03a9f4; color: white; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 22px; font-weight: bold; cursor: pointer; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
     .modal-content { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 320px; box-sizing: border-box; }
-    input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; }
+    input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
 </style>
 </head>
 <body onload="initApp()">
 
 <div class="container">
-    <div class="card dday-card">
-        <span class="dday-unit">iPad mini 7 획득까지</span>
-        <span id="dDayCount" class="dday-count">D-??</span>
-        <span class="dday-target">🎯 2026년 4월 24일 (금)</span>
-    </div>
-
     <div class="card" style="border-top-color: #00897b;">
+        <div id="aiBubble" class="ai-bubble">🎨 JUNHO 전용 API 서버 활성화! 펜슬 프로를 향해 고고! 🚀</div>
         <div class="balance-val" id="balanceDisplay">0 원</div>
         <div class="history-log" id="historyLog"></div>
-        <button class="btn-main" onclick="openModal('moneyModal')">💰 저축 기록하기</button>
+        <button class="btn-main" onclick="openModal('moneyModal')">💰 기록 / 저축</button>
     </div>
 
     <div class="card" style="border-top-color: #03a9f4;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-weight:bold;">🍎 풀세트 완성 도전</span>
+            <span style="font-weight:bold;">🍎 아이패드 풀세트 달성도</span>
             <span id="progText" style="font-size:0.8em; font-weight:bold; color:#03a9f4;">0%</span>
         </div>
         <div class="bar-bg"><div id="progressBar" class="bar-fill"></div></div>
@@ -94,18 +86,14 @@
 </div>
 
 <div id="moneyModal" class="modal"><div class="modal-content">
-    <h3>내역 기록</h3>
-    <input type="date" id="mDate">
-    <input type="text" id="mNote" placeholder="내용">
-    <input type="number" id="mAmount" placeholder="금액">
-    <button class="btn-main" onclick="saveMoney()">기록하기</button>
+    <h3>기록</h3>
+    <input type="date" id="mDate"><input type="text" id="mNote" placeholder="내용"><input type="number" id="mAmount" placeholder="금액">
+    <button class="btn-main" onclick="saveMoney()">저장</button>
     <button onclick="closeModals()" style="width:100%; border:none; background:none; margin-top:10px; color:gray;">취소</button>
 </div></div>
-
 <div id="todoModal" class="modal"><div class="modal-content">
     <h3>루틴 추가</h3>
-    <input type="text" id="todoInput" placeholder="할 일 입력">
-    <button class="btn-main" style="background:#fbc02d;" onclick="addTodo()">추가</button>
+    <input type="text" id="todoInput" placeholder="할 일"><button class="btn-main" style="background:#fbc02d;" onclick="addTodo()">추가</button>
 </div></div>
 
 <script>
@@ -114,8 +102,6 @@
     function initApp() {
         const saved = localStorage.getItem('junho_v18_final');
         if (saved) appData = JSON.parse(saved);
-        
-        // 위시리스트 초기화 (준호님 가격 반영)
         if (appData.wishes.length === 0) {
             appData.wishes = [
                 { name: "펜슬 프로", price: 195000, img: "✏️", bought: false },
@@ -124,29 +110,9 @@
                 { name: "필름", price: 10000, img: "📄", bought: false }
             ];
         }
-        if (appData.todos.length === 0) {
-            appData.todos = [{text: "과자 안 사먹기", done: false}, {text: "수학 숙제", done: false}];
-        }
+        if (appData.todos.length === 0) appData.todos = [{text: "과자 안 사먹기", done: false}];
         document.getElementById('mDate').value = new Date().toISOString().substring(0, 10);
-        updateDDay();
         renderAll();
-    }
-
-    // [D-DAY 계산 함수]
-    function updateDDay() {
-        const target = new Date('2026-04-24');
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const diff = target - today;
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        
-        const display = document.getElementById('dDayCount');
-        if (days > 0) display.innerText = "D-" + days;
-        else if (days === 0) {
-            display.innerText = "D-DAY";
-            display.style.color = "#ff5252";
-            confetti({ particleCount: 150, spread: 100 });
-        } else display.innerText = "획득 완료! 🎉";
     }
 
     function renderAll() {
@@ -154,81 +120,72 @@
         renderLogs(); renderWishes(); renderTodos(); renderSchedule(); saveData();
     }
 
+    // [기능 함수들]
     function saveMoney() {
-        const date = document.getElementById('mDate').value;
-        const note = document.getElementById('mNote').value || "기록";
-        const amt = parseInt(document.getElementById('mAmount').value);
-        if(!isNaN(amt)) {
-            appData.balance += amt;
-            appData.logs.unshift({ date, note, amount: amt });
-            if(amt > 0) confetti({ particleCount: 100, origin: { y: 0.7 } });
-            closeModals(); renderAll();
-        }
+        const d = document.getElementById('mDate').value, n = document.getElementById('mNote').value || "기록", a = parseInt(document.getElementById('mAmount').value);
+        if(!isNaN(a)) { appData.balance += a; appData.logs.unshift({ date:d, note:n, amount:a }); if(a > 0) confetti(); closeModals(); renderAll(); }
     }
-
     function renderLogs() {
-        document.getElementById('historyLog').innerHTML = appData.logs.slice(0, 10).map(l => `
-            <div class="log-item">
-                <span><b>${l.note}</b> <small style="color:#999">${l.date}</small></span>
-                <span style="color:${l.amount>=0?'#2e7d32':'#d32f2f'}">${l.amount.toLocaleString()}원</span>
-            </div>`).join('') || '<p style="text-align:center; color:#ccc; font-size:0.8em;">내역 없음</p>';
+        document.getElementById('historyLog').innerHTML = appData.logs.slice(0, 15).map(l => `<div class="log-item"><span><b>${l.note}</b> <small>${l.date}</small></span><span style="color:${l.amount>=0?'#2e7d32':'#d32f2f'}">${l.amount.toLocaleString()}원</span></div>`).join('');
     }
-
     function renderWishes() {
         let total = 0;
-        document.getElementById('wishGrid').innerHTML = appData.wishes.map((w, i) => {
-            total += w.price;
-            return `<div class="wish-box ${w.bought?'bought':''}" onclick="toggleWish(${i})">
-                <div class="img-container">${w.img}</div>
-                <div style="padding:10px; text-align:center; font-size:0.75em;"><b>${w.name}</b><br>${w.price.toLocaleString()}원</div>
-            </div>`;
-        }).join('');
+        document.getElementById('wishGrid').innerHTML = appData.wishes.map((w, i) => { total += w.price; return `<div class="wish-box ${w.bought?'bought':''}" onclick="toggleWish(${i})"><div class="img-container">${w.img}</div><div style="padding:10px; text-align:center; font-size:0.75em;"><b>${w.name}</b><br>${w.price.toLocaleString()}원</div></div>`; }).join('');
         const p = total > 0 ? Math.min(100, Math.floor((appData.balance / total) * 100)) : 0;
         document.getElementById('progressBar').style.width = p + "%";
         document.getElementById('progText').innerText = p + "% 달성";
     }
-
     function toggleWish(i) {
         const w = appData.wishes[i];
-        if(!w.bought && appData.balance >= w.price) {
-            if(confirm(`${w.name}을(를) 구매 처리할까요?`)) { 
-                appData.balance -= w.price; w.bought = true; 
-                appData.logs.unshift({ date: new Date().toISOString().substring(0,10), note: `구매: ${w.name}`, amount: -w.price });
-                confetti({ particleCount: 200 });
-            }
-        } else if(w.bought) { if(confirm('구매 취소?')) { appData.balance += w.price; w.bought = false; } }
+        if(!w.bought && appData.balance >= w.price) { if(confirm(`${w.name} 구매?`)) { appData.balance -= w.price; w.bought = true; appData.logs.unshift({ date: new Date().toISOString().substring(0,10), note: `구매: ${w.name}`, amount: -w.price }); confetti(); } }
+        else if(w.bought) { if(confirm('취소?')) { appData.balance += w.price; w.bought = false; } }
         renderAll();
     }
-
     function addTodo() { const v = document.getElementById('todoInput').value; if(v) { appData.todos.push({text:v, done:false}); closeModals(); renderAll(); } }
-    function toggleTodo(i) { appData.todos[i].done = !appData.todos[i].done; renderAll(); }
+    function toggleTodo(i) { appData.todos[i].done = !appData.todos[i].done; if(appData.todos.every(t=>t.done)) confetti(); renderAll(); }
     function deleteTodo(e, i) { e.stopPropagation(); appData.todos.splice(i,1); renderAll(); }
     function renderTodos() {
-        document.getElementById('todoList').innerHTML = appData.todos.map((t, i) => `
-            <div class="todo-item ${t.done?'done':''}" onclick="toggleTodo(${i})">
-                <div class="todo-check"></div><span style="font-size:0.9em;">${t.text}</span>
-                <button style="position:absolute; right:10px; border:none; background:none; color:#ccc;" onclick="deleteTodo(event, ${i})">×</button>
-            </div>`).join('');
+        document.getElementById('todoList').innerHTML = appData.todos.map((t, i) => `<div class="todo-item ${t.done?'done':''}" onclick="toggleTodo(${i})"><div class="todo-check"></div><span>${t.text}</span><button class="del-todo" onclick="deleteTodo(event, ${i})">×</button></div>`).join('');
     }
 
+    // [정밀 일정]
     function renderSchedule() {
         const mor = [{t:'07:25-07:40', task:'⏰ 기상', s:'morning-slot'}, {t:'07:40-08:15', task:'🍱 아침/준비', s:'morning-slot'}];
         const nig = [{t:'19:00-19:40', task:'🍱 저녁 식사'}, {t:'21:30-21:50', task:'🪥 취침 준비'}, {t:'21:50-07:25', task:'💤 취침'}];
+        const game = "🎮 Ryujinx Time", shower = "🚿 샤워 (기기종료)";
         const days = [
-            { title: "월 · 목요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활'}, {t:'14:35-15:05', task:'✏️ 수학 숙제', s:'homework-slot'}, {t:'15:05-18:05', task:'🎮 게임 및 자유'}, ...nig]},
-            { title: "화요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활'}, {t:'16:00-18:00', task:'💻 코딩 학원'}, ...nig]},
-            { title: "금요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활'}, {t:'14:30-15:30', task:'✚ 수학 과외'}, ...nig]},
-            { title: "토 · 일요일", s: [{t:'09:00-12:00', task:'✏️ 부족한 공부'}, {t:'13:00-18:30', task:'✨ 무한 자유 ✨'}, ...nig]}
+            { title: "월 · 목요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:35-15:05', task:'✏️ 수학 숙제', s:'homework-slot'}, {t:'15:05-15:35', task:game}, {t:'15:35-16:05', task:'✏️ 중수 숙제', s:'homework-slot'}, {t:'16:05-16:35', task:game}, {t:'16:35-18:05', task:'✏️ 영어/코딩 숙제'}, {t:'18:30-19:00', task:shower}, ...nig]},
+            { title: "화요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'16:00-18:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'18:30-19:00', task:shower}, ...nig]},
+            { title: "수요일", s: [...mor, {t:'08:15-12:50', task:'🏫 학교 생활', s:'school-slot'}, {t:'13:00-14:00', task:'🔤 영어 과외', s:'homework-slot'}, {t:'14:30-18:00', task:'✏️ 개인 숙제', s:'homework-slot'}, {t:'18:30-19:00', task:shower}, ...nig]},
+            { title: "금요일", s: [...mor, {t:'08:15-14:20', task:'🏫 학교 생활', s:'school-slot'}, {t:'14:30-15:30', task:'✚ 수학 과외', s:'homework-slot'}, {t:'16:00-18:00', task:'✏️ 숙제 정산', s:'homework-slot'}, {t:'18:30-19:00', task:shower}, ...nig]},
+            { title: "토요일", s: [{t:'09:00-11:00', task:'💻 코딩 학원', s:'homework-slot'}, {t:'13:00-18:30', task:'✨ 자유 시간 ✨'}, {t:'18:30-19:00', task:shower}, ...nig]},
+            { title: "일요일", s: [{t:'09:00-12:00', task:'⚠️ 숙제 총정리', s:'urgent-slot'}, {t:'13:00-18:30', task:'🎮 자유 게임', s:'game-slot'}, {t:'19:00-20:00', task:'🍱 일요 만찬'}, {t:'21:50-07:25', task:'💤 취침'}]}
         ];
-        document.getElementById('scheduleContainer').innerHTML = days.map(d => `
-            <div class="card"><div style="font-weight:900; margin-bottom:12px; border-bottom:2px solid #eee;">${d.title}</div>
-            ${d.s.map(sl => `<div class="slot ${sl.s||''}"><span class="time">${sl.t}</span><span>${sl.task}</span></div>`).join('')}</div>
-        `).join('');
+        document.getElementById('scheduleContainer').innerHTML = days.map(d => `<div class="card"><div style="font-weight:900; margin-bottom:12px; border-bottom:2px solid #eee;">${d.title}</div>${d.s.map(sl => `<div class="slot ${sl.s||''}"><span class="time">${sl.t}</span><span>${sl.task}</span></div>`).join('')}</div>`).join('');
+    }
+
+    // [API 핸들러 함수]
+    async function processRequest(req) {
+        if (req.name !== "JUNHO") return "Access Denied";
+        if (req.type === "today") {
+            const days = ["일요일", "월 · 목요일", "화요일", "수요일", "월 · 목요일", "금요일", "토요일"];
+            const t = days[new Date().getDay()];
+            const s = {
+                "월 · 목요일": "07:25 기상/학교/수학숙제/류진스크", "화요일": "07:25 기상/학교/코딩학원", 
+                "수요일": "07:25 기상/학교/영어과외/개인숙제", "금요일": "07:25 기상/학교/수학과외/정산",
+                "토요일": "09:00 코딩학원/무한자유", "일요일": "09:00 숙제정리/자유게임/만찬"
+            };
+            return `[${t} 일정]\n${s[t] || "일정 없음"}`;
+        }
+        if (req.type === "money") return `현재 자산: ${appData.balance.toLocaleString()}원`;
+        if (req.type === "check") return `[체크리스트]\n${appData.todos.map(t => `${t.done?'✅':'⬜'} ${t.text}`).join('\n')}`;
+        return "Invalid Type";
     }
 
     function openModal(id) { document.getElementById(id).style.display='flex'; }
     function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
     function saveData() { localStorage.setItem('junho_v18_final', JSON.stringify(appData)); }
+    function openModal(id) { document.getElementById(id).style.display='flex'; }
 </script>
 </body>
 </html>
